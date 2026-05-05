@@ -284,8 +284,8 @@ tracfin-module-example/
 | Pathological | 6% | ~28 visits / 18 months (loss-chase) | €50–€200 (escalating) |
 
 #### Special flags
-- **ANPR** (5%): Automatic Number Plate Recognition
-- **IM** (8%): Gaming ban (Interdiction de jeu)
+- **ANPR** (5%): Casino's ban list
+- **IM** (8%): Gaming ban
 
 ### Data example
 
@@ -399,4 +399,4 @@ To test this project:
 
 ---
 
-**Made with ❤️ for Vikings Casino Group**
+**Made with ❤️ by Tony J**
