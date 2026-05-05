@@ -1,0 +1,21 @@
+[package]
+name = "tracfin-seeder"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.40", features = ["full"] }
+tokio-postgres = { version = "0.7", features = ["with-chrono-0_4", "with-uuid-1"] }
+deadpool-postgres = "0.14"
+chrono = "0.4"
+rand = "0.8"
+uuid = { version = "1.0", features = ["v4"] }
+rayon = "1.10"
+futures = "0.3"
+rust_decimal = { version = "1.33", features = ["tokio-pg"] }
+num_cpus = "1.16"
+serde_json = "1"
+
+[[bin]]
+name = "seeder"
+path = "src/main.rs"

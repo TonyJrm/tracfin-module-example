@@ -1,0 +1,43 @@
+# Node modules
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Next.js
+.next
+out
+*.tsbuildinfo
+
+# Env files
+.env.local
+.env*.local
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database data (not needed in image)
+database/data/
+
+# Tests
+coverage
+.nyc_output
+
+# Misc
+*.log

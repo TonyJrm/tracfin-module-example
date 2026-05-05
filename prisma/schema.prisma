@@ -1,0 +1,198 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model banks {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  client_id      String    @db.Uuid
+  bank_name      String    @db.VarChar(255)
+  account_number String    @db.VarChar(100)
+  created_at     DateTime? @default(now()) @db.Timestamp(6)
+  players        players   @relation(fields: [client_id], references: [client_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([account_number], map: "idx_banks_account")
+  @@index([client_id], map: "idx_banks_client")
+}
+
+model cash_transactions {
+  id                  String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  client_id           String              @db.Uuid
+  game_session_id     String?             @db.Uuid
+  gamedate            DateTime            @db.Timestamp(6)
+  flow_datetime       DateTime            @db.Timestamp(6)
+  place               String              @db.VarChar(100)
+  buy                 Decimal             @default(0) @db.Decimal(12, 2)
+  sell                Decimal             @default(0) @db.Decimal(12, 2)
+  transaction         String              @db.VarChar(50)
+  subtransaction      String              @db.VarChar(50)
+  is_jackpot          Boolean?
+  is_taxable          Boolean?
+  amount_before_tax   Decimal?            @db.Decimal(12, 2)
+  tax_amount          Decimal?            @db.Decimal(12, 2)
+  amount_after_tax    Decimal?            @db.Decimal(12, 2)
+  value               Decimal?            @db.Decimal(12, 2)
+  cheque_number       String?             @db.VarChar(100)
+  account_number      String?             @db.VarChar(100)
+  bank_name           String?             @db.VarChar(255)
+  is_guaranteed       Boolean?
+  guarantee_number    String?             @db.VarChar(100)
+  related_txn_id      String?             @db.Uuid
+  created_at          DateTime?           @default(now()) @db.Timestamp(6)
+  players             players             @relation(fields: [client_id], references: [client_id], onDelete: Cascade, onUpdate: NoAction)
+  game_sessions       game_sessions?      @relation(fields: [game_session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  related_txn         cash_transactions?  @relation("related_txn", fields: [related_txn_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  related_txn_inverse cash_transactions[] @relation("related_txn")
+
+  @@index([client_id], map: "idx_cash_trans_client")
+  @@index([flow_datetime], map: "idx_cash_trans_flow_datetime")
+  @@index([gamedate], map: "idx_cash_trans_gamedate")
+  @@index([game_session_id], map: "idx_cash_trans_game_session")
+  @@index([transaction], map: "idx_cash_trans_type")
+  @@index([related_txn_id], map: "idx_cash_trans_related_txn")
+}
+
+model casinos {
+  casino_id  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name       String    @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  players    players[]
+
+  @@index([name], map: "idx_casinos_name")
+}
+
+model machines {
+  id             String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  machine_number String          @unique @db.VarChar(10)
+  serial_number  String          @unique @db.VarChar(10)
+  machine_type   String          @default("SLOT") @db.VarChar(50)
+  denomination   Decimal         @default(0.01) @db.Decimal(6, 2)
+  location_zone  String          @default("ZONE_A") @db.VarChar(50)
+  is_active      Boolean         @default(true)
+  created_at     DateTime?       @default(now()) @db.Timestamp(6)
+  game_sessions  game_sessions[]
+
+  @@index([machine_number], map: "idx_machines_number")
+  @@index([location_zone], map: "idx_machines_zone")
+}
+
+model game_sessions {
+  id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  client_id         String?             @db.Uuid
+  start_time        DateTime            @db.Timestamp(6)
+  end_time          DateTime            @db.Timestamp(6)
+  machine_number    String              @db.VarChar(10)
+  bills             Decimal             @default(0) @db.Decimal(12, 2)
+  coin_in           Decimal             @db.Decimal(12, 2)
+  cash_out          Decimal             @db.Decimal(12, 2)
+  jackpot           Decimal?            @default(0) @db.Decimal(12, 2)
+  out_type          String              @db.VarChar(20)
+  has_stacker_alert Boolean             @default(false)
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  players           players?            @relation(fields: [client_id], references: [client_id], onDelete: Cascade, onUpdate: NoAction)
+  machines          machines            @relation(fields: [machine_number], references: [machine_number], onDelete: NoAction, onUpdate: NoAction)
+  cash_transactions cash_transactions[]
+  tito_transactions tito_transactions[]
+
+  @@index([client_id], map: "idx_game_sessions_client")
+  @@index([machine_number], map: "idx_game_sessions_machine")
+  @@index([start_time], map: "idx_game_sessions_start_time")
+}
+
+model players {
+  client_id             String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  parent_casino_id      String              @db.Uuid
+  picture_url           String?
+  gender                String              @db.VarChar(50)
+  firstname             String              @db.VarChar(255)
+  lastname              String              @db.VarChar(255)
+  birth_date            DateTime            @db.Date
+  birth_place           String              @db.VarChar(255)
+  nationality           String              @db.VarChar(100)
+  profession            String              @db.VarChar(255)
+  phone_number          String              @db.VarChar(50)
+  email                 String              @db.VarChar(255)
+  mobile                String              @db.VarChar(50)
+  address_number        String              @db.VarChar(50)
+  address_street        String
+  address_postal_code   String?             @db.VarChar(20)
+  address_city          String              @db.VarChar(255)
+  address_country       String              @db.VarChar(100)
+  id_doc_type           String              @db.VarChar(50)
+  id_doc_number         String              @db.VarChar(100)
+  id_doc_delivery_date  DateTime            @db.Date
+  id_doc_delivery_place String              @db.VarChar(255)
+  id_doc_delivery_dept  String              @db.VarChar(100)
+  id_doc_expiring_date  DateTime            @db.Date
+  id_doc_country        String              @db.VarChar(100)
+  comments              String?
+  is_anpr               Boolean?            @default(false)
+  is_im                 Boolean?            @default(false)
+  loyalty_points        Decimal?            @default(0) @db.Decimal(12, 2)
+  created_at            DateTime?           @default(now()) @db.Timestamp(6)
+  updated_at            DateTime?           @default(now()) @db.Timestamp(6)
+  banks                 banks[]
+  cash_transactions     cash_transactions[]
+  game_sessions         game_sessions[]
+  casinos               casinos             @relation(fields: [parent_casino_id], references: [casino_id], onDelete: Cascade, onUpdate: NoAction)
+  tito_transactions     tito_transactions[]
+  requisitions          requisitions[]
+
+  @@index([is_anpr], map: "idx_players_anpr", where: raw("(is_anpr = true)"))
+  @@index([parent_casino_id], map: "idx_players_casino")
+  @@index([email], map: "idx_players_email")
+  @@index([is_im], map: "idx_players_im", where: raw("(is_im = true)"))
+  @@index([lastname], map: "idx_players_lastname")
+}
+
+model tito_transactions {
+  id                       String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  game_session_id          String        @db.Uuid
+  client_id                String        @db.Uuid
+  ticket_number            String        @db.VarChar(50)
+  amount                   Decimal       @db.Decimal(12, 2)
+  issuance_status          String        @db.VarChar(20)
+  redemption_status        String        @db.VarChar(20)
+  issuance_device          String        @db.VarChar(50)
+  redemption_device        String        @db.VarChar(50)
+  issuance_time            DateTime      @db.Timestamp(6)
+  redemption_time          DateTime?     @db.Timestamp(6)
+  type                     String        @db.VarChar(50)
+  issuance_serial_number   String        @db.VarChar(100)
+  redemption_serial_number String?       @db.VarChar(100)
+  created_at               DateTime?     @default(now()) @db.Timestamp(6)
+  players                  players       @relation(fields: [client_id], references: [client_id], onDelete: Cascade, onUpdate: NoAction)
+  game_sessions            game_sessions @relation(fields: [game_session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([client_id], map: "idx_tito_client")
+  @@index([game_session_id], map: "idx_tito_game_session")
+  @@index([issuance_time], map: "idx_tito_issuance_time")
+  @@index([ticket_number], map: "idx_tito_ticket")
+}
+
+model requisitions {
+  id                   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  requested_lastname   String    @db.VarChar(255)
+  requested_firstname  String    @db.VarChar(255)
+  requested_birth_date DateTime  @db.Date
+  added_at             DateTime  @default(now()) @db.Timestamp(6)
+  found_at             DateTime? @db.Timestamp(6)
+  found_client_id      String?   @db.Uuid
+  remarks              String    @db.VarChar(255)
+  created_at           DateTime? @default(now()) @db.Timestamp(6)
+  players              players?  @relation(fields: [found_client_id], references: [client_id], onDelete: SetNull, onUpdate: NoAction)
+}
+
+model sensitive_areas {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String    @db.VarChar(255)
+  street      String    @db.VarChar(255)
+  city        String    @db.VarChar(255)
+  description String?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+}

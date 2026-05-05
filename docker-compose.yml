@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tracfin-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: tracfin
+      POSTGRES_USER: tracfin_user
+      POSTGRES_PASSWORD: tracfin_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracfin_user -d tracfin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: tracfin-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+  seeder:
+    build:
+      context: ./database/rust-seeder
+      dockerfile: Dockerfile
+    container_name: tracfin-seeder
+    profiles: ["tools"]
+    environment:
+      DB_HOST: tracfin-db
+      DB_PORT: 5432
+      DB_USER: tracfin_user
+      DB_PASSWORD: tracfin_password
+      DB_NAME: tracfin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - default
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
